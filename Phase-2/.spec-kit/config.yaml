@@ -1,0 +1,12 @@
+specs_dir: specs
+features_dir: specs/features
+api_dir: specs/api
+database_dir: specs/database
+ui_dir: specs/ui
+contracts_dir: specs/contracts
+templates_dir: .specify/templates
+scripts_dir: .specify/scripts
+memory_dir: .specify/memory
+history_dir: history
+prompts_dir: history/prompts
+adrs_dir: history/adr
