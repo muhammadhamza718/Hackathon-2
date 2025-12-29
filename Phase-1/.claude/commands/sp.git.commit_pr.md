@@ -72,6 +72,7 @@ Based on the gathered context, **you decide** the optimal approach.
 
 ### Decision Tree:
 
+<<<<<<< HEAD
 **1. Check User Intent & Current State:**
 
 - Did user explicitly say "create feature branch", "new branch", or "start PR"?
@@ -90,10 +91,33 @@ _Used when user did NOT ask for a branch. You MUST target `main`._
 3. `git add .`
 4. `git commit -m "..."`
 5. `git push -u origin main`
+=======
+**1. Check User Intent:**
+
+- Did user explicitly say "create feature branch", "new branch", or "start PR"?
+  - **YES** → Use **Feature Branch Strategy**.
+  - **NO** → Use **Direct Commit Strategy** (Default).
+
+**2. Check Current State:**
+
+- Are there uncommitted changes?
+  - **NO** → Invoke human: "No changes detected. What would you like to commit?"
+  - **YES** → Proceed.
+
+**3. Select Strategy:**
+
+**Strategy A: Direct Commit (DEFAULT)**
+_Used when user did NOT ask for a branch, even if on `main`._
+
+1. `git add .`
+2. `git commit -m "..."`
+3. `git push`
+>>>>>>> b8e57a787115280b3aea4aec8f118a2c3f4cc1b2
 
 **Strategy B: Feature Branch (Explicit Request Only)**
 _Used ONLY when user asks for a feature branch._
 
+<<<<<<< HEAD
 1. Create/Ensure feature branch (`git checkout -b <name>`).
 2. `git commit -m "..."`
 3. `git push -u origin <name>`
@@ -103,6 +127,18 @@ _Used ONLY when user asks for a feature branch._
 
 - No mention of branch -> **Force Main**.
 - Mention of branch/PR -> **Feature Branch**.
+=======
+1. Create meaningful branch name if not provided.
+2. `git checkout -b <name>`
+3. `git commit -m "..."`
+4. `git push -u origin <name>`
+5. `gh pr create ...`
+
+**Make this decision autonomously.**
+
+- If user did NOT mention branches -> **Strategy A**.
+- If user mentioned "branch" or "PR" -> **Strategy B**.
+>>>>>>> b8e57a787115280b3aea4aec8f118a2c3f4cc1b2
 
 ## Phase 3: Generate Intelligent Content (Autonomous)
 
@@ -171,11 +207,17 @@ Execute the workflow you decided:
 **For Direct Commit Strategy (Default):**
 
 ```bash
+<<<<<<< HEAD
 # If not on main/master, force it:
 git branch -m main  # Rename current branch to main
 git add .
 git commit -m "conventional commit message"
 git push -u origin main
+=======
+git add .
+git commit -m "conventional commit message"
+git push
+>>>>>>> b8e57a787115280b3aea4aec8f118a2c3f4cc1b2
 ```
 
 **For Feature Branch Strategy (Explicit Request):**
