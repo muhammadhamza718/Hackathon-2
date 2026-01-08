@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "debug": true,
+  "database_url": "postgresql://localhost:5432/todo_chatbot_dev",
+  "api_port": 8001,
+  "mcp_server_url": "http://localhost:8000",
+  "log_level": "DEBUG",
+  "log_format_json": false,
+  "cors_origins": "http://localhost:3000,http://localhost:3001",
+  "enable_rate_limiting": false,
+  "database_echo": true
+}

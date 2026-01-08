@@ -1,0 +1,8 @@
+mcp
+sqlmodel
+psycopg2-binary
+pydantic
+fastapi
+uvicorn[standard]
+python-multipart
+openai

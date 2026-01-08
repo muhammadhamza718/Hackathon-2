@@ -23,21 +23,39 @@
 
 ### Code Clarity and Maintainability
 - [PRINCIPLE_REQUIREMENTS]
+- Code must utilize Textual and Rich frameworks appropriately, with proper component separation and event handling
+
+### UI Framework Excellence
+- [PRINCIPLE_REQUIREMENTS]
+- Application MUST use Textual and Rich for the interface exclusively
+- UI must leverage Textual's advanced features including mouse support, keyboard shortcuts, and reactive components
 
 ### User Experience
 - [PRINCIPLE_REQUIREMENTS]
+- TUI must feel modern, interactive, and "pro" with mouse support, keyboard shortcuts, and clear layout structure (Sidebar, Header, Main Content, Footer)
+- Interface should provide meaningful visual feedback through Rich formatting
 
-### Data Integrity
+### Data Integrity and Validation
 - [PRINCIPLE_REQUIREMENTS]
+- All user inputs must be validated before processing (title: required, max 50 chars; description: optional, max 200 chars)
+- Priority validation must ensure only Low, Medium, or High values are accepted
+
+### Architectural Separation
+- [PRINCIPLE_REQUIREMENTS]
+- Maintain clean separation between TUI (View), TaskService (Logic), and TaskStorage (Data)
+- Each layer must have distinct responsibilities: View handles UI presentation and user interaction, TaskService manages business logic, TaskStorage manages data operations
+
+### Rich Formatting Quality
+- [PRINCIPLE_REQUIREMENTS]
+- All outputs must be beautifully formatted with Rich colors and icons (e.g., ✅ status and priority colors)
+- Use Rich's color palette consistently and implement appropriate icons for different states
 
 ### Testability
 - [PRINCIPLE_REQUIREMENTS]
 
-### Minimal Persistence Risk
-- [PRINCIPLE_REQUIREMENTS]
-
 ### Platform Compatibility
 - [PRINCIPLE_REQUIREMENTS]
+- Textual framework should be used in a way that maintains consistent behavior across platforms
 
 ## Research Summary
 

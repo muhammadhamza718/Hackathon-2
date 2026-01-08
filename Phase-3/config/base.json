@@ -1,0 +1,16 @@
+{
+  "database_pool_size": 10,
+  "database_max_overflow": 20,
+  "api_workers": 1,
+  "mcp_timeout": 30,
+  "rate_limit_requests": 100,
+  "rate_limit_window": 60,
+  "cache_ttl_default": 300,
+  "cache_ttl_search": 300,
+  "cache_ttl_list": 120,
+  "enable_metrics": true,
+  "enable_health_checks": true,
+  "enable_cors": true,
+  "enable_rate_limiting": true,
+  "enable_caching": true
+}

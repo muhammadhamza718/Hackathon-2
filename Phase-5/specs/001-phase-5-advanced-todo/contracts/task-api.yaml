@@ -1,0 +1,492 @@
+openapi: 3.0.0
+info:
+  title: Task Management API
+  version: 1.0.0
+  description: API for managing tasks with advanced features including recurring tasks, due dates, and reminders
+
+paths:
+  /api/v1/tasks:
+    get:
+      summary: List tasks with filtering, sorting, and search
+      parameters:
+        - name: search
+          in: query
+          description: Search term for full-text search
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by task status
+          required: false
+          schema:
+            type: string
+            enum: [pending, completed, archived]
+        - name: priority
+          in: query
+          description: Filter by priority level
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: due_date_from
+          in: query
+          description: Filter tasks with due date from this date
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: due_date_to
+          in: query
+          description: Filter tasks with due date to this date
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Sort field (due_date, priority, created_at, title)
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: Sort order (asc, desc)
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid request data
+
+  /api/v1/tasks/{id}:
+    get:
+      summary: Get a specific task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+    put:
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+    delete:
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+
+  /api/v1/recurring-tasks:
+    get:
+      summary: List recurring task templates
+      responses:
+        '200':
+          description: List of recurring task templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecurringTaskTemplate'
+    post:
+      summary: Create a recurring task template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringTaskTemplateCreate'
+      responses:
+        '201':
+          description: Recurring task template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringTaskTemplate'
+
+  /api/v1/recurring-tasks/{id}:
+    get:
+      summary: Get a specific recurring task template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recurring task template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringTaskTemplate'
+    put:
+      summary: Update a recurring task template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringTaskTemplateUpdate'
+      responses:
+        '200':
+          description: Recurring task template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringTaskTemplate'
+    delete:
+      summary: Delete a recurring task template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Recurring task template deleted
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, archived]
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+        user_id:
+          type: string
+          format: uuid
+        recurrence_pattern:
+          type: object
+          nullable: true
+          properties:
+            frequency:
+              type: string
+              enum: [daily, weekly, monthly, yearly, custom]
+            interval:
+              type: integer
+            end_condition:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [never, after, on_date]
+                value:
+                  type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, archived]
+        due_date:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+
+    RecurrencePattern:
+      type: object
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly, custom]
+        interval:
+          type: integer
+          minimum: 1
+          default: 1
+        days_of_week:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        days_of_month:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 31
+        end_condition:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [never, after, on_date]
+            value:
+              type: string
+
+    RecurringTaskTemplate:
+      type: object
+      required:
+        - id
+        - name
+        - user_id
+        - active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        task_template:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            priority:
+              type: string
+              enum: [low, medium, high, critical]
+            tags:
+              type: array
+              items:
+                type: string
+        user_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RecurringTaskTemplateCreate:
+      type: object
+      required:
+        - name
+        - recurrence_pattern
+        - task_template
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        task_template:
+          $ref: '#/components/schemas/TaskTemplate'
+        active:
+          type: boolean
+          default: true
+
+    RecurringTaskTemplateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        task_template:
+          $ref: '#/components/schemas/TaskTemplate'
+        active:
+          type: boolean
+
+    TaskTemplate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        tags:
+          type: array
+          items:
+            type: string

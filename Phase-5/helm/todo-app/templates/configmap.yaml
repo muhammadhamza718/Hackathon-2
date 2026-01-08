@@ -1,0 +1,15 @@
+{{- if .Values.configMaps }}
+{{- range $key, $value := .Values.configMaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $key }}
+  labels:
+    {{- include "todo-app.labels" $ | nindent 4 }}
+data:
+{{- range $configKey, $configValue := $value.data }}
+  {{ $configKey }}: {{ $configValue | quote }}
+{{- end }}
+{{- end }}
+{{- end }}

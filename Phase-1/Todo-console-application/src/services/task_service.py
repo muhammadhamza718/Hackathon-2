@@ -1,5 +1,6 @@
 from typing import List, Optional
 from src.models.task import Task, validate_task_data
+
 from src.storage.task_storage import TaskStorage
 
 
@@ -29,14 +30,19 @@ class TaskService:
             The newly created task
 
         Raises:
-            ValueError: If title or description validation fails
+            ValueError: If validation fails
         """
         # Validate the input data
         validate_task_data(title, description)
 
         # Create a new task with the next available ID
         next_id = self.storage.get_next_available_id()
-        task = Task(id=next_id, title=title, description=description, completed=False)
+        task = Task(
+            id=next_id,
+            title=title,
+            description=description,
+            completed=False
+        )
 
         # Add the task to storage
         return self.storage.add_task(task)
@@ -88,13 +94,20 @@ class TaskService:
         """
         updates = {}
         if title is not None:
-            validate_task_data(title, description or "")
+            # Get the current task to preserve other fields if not updating
+            current_task = self.storage.get_task_by_id(task_id)
+            if current_task:
+                validate_task_data(title, current_task.description)
+            else:
+                validate_task_data(title, description or "")
             updates['title'] = title
         if description is not None:
-            # Get the current task to preserve the title if not updating
+            # Get the current task to preserve other fields
             current_task = self.storage.get_task_by_id(task_id)
             if current_task:
                 validate_task_data(current_task.title, description)
+            else:
+                validate_task_data(title or "", description)
             updates['description'] = description
         if completed is not None:
             updates['completed'] = completed

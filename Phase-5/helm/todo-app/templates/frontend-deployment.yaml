@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-app.frontend.fullname" . }}
+  labels:
+    {{- include "todo-app.labels" . | nindent 4 }}
+    app: {{ include "todo-app.frontend.name" . }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo-app.selectorLabels" . | nindent 6 }}
+      app: {{ include "todo-app.frontend.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "todo-app.selectorLabels" . | nindent 8 }}
+        app: {{ include "todo-app.frontend.name" . }}
+    spec:
+      containers:
+      - name: {{ include "todo-app.frontend.name" . }}
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - containerPort: 3000
+        env:
+{{- range .Values.frontend.env }}
+        - name: {{ .name }}
+{{- if .valueFrom }}
+          valueFrom:
+{{ toYaml .valueFrom | indent 10 }}
+{{- else }}
+          value: {{ .value | quote }}
+{{- end }}
+{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthCheck.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthCheck.failureThreshold }}
+        resources:
+{{- toYaml .Values.frontend.resources | nindent 10 }}

@@ -1,0 +1,15 @@
+{
+  "environment": "production",
+  "debug": false,
+  "database_url": "postgresql://prod-db-host:5432/todo_chatbot",
+  "api_port": 8001,
+  "mcp_server_url": "https://mcp-server.example.com",
+  "log_level": "INFO",
+  "log_format_json": true,
+  "cors_origins": "https://yourdomain.com,https://www.yourdomain.com",
+  "enable_rate_limiting": true,
+  "rate_limit_requests": 100,
+  "database_echo": false,
+  "cache_ttl_default": 300,
+  "cache_ttl_list": 120
+}

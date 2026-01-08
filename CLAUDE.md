@@ -208,3 +208,11 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Recent Changes
+- 001-premium-tui: Added Python 3.13+ + Textual for TUI framework, Rich for formatting and colors, UV for dependency management
+- 001-k8s-deployment: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
+## Active Technologies
+- Python 3.13+ + Textual for TUI framework, Rich for formatting and colors, UV for dependency management (001-premium-tui)
+- In-memory storage only for Phase I (N/A for persistent storage) (001-premium-tui)

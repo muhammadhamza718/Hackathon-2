@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Redpanda (Kafka-compatible message broker)
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.15
+    command:
+      - redpanda
+      - start
+      - --mode dev-container
+      - --kafka-addr 0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://localhost:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+  # Redpanda Console (Kafka UI)
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.3.0
+    depends_on:
+      - redpanda
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BROKERS=redpanda:9092
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Dapr placement service
+  dapr-placement:
+    image: docker.io/daprio/dapr:1.11.0
+    command: ["./placement", "-port", "50006"]
+    ports:
+      - "50006:50006"
+
+  # Dapr operator service
+  dapr-operator:
+    image: docker.io/daprio/dapr:1.11.0
+    command: ["./operator", "-kubernetes=false"]
+    ports:
+      - "6500:6500"
+      - "8600:8600"
+
+volumes:
+  redpanda_data:
+  postgres_data:

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_E8chHiTZ7tGD@db:5432/neondb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./mcp-server/.env
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_E8chHiTZ7tGD@db:5432/neondb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: neondb
+      POSTGRES_USER: neondb_owner
+      POSTGRES_PASSWORD: npg_E8chHiTZ7tGD
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neondb_owner -d neondb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
