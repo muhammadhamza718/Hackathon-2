@@ -49,14 +49,14 @@ frontend:
   replicaCount: 1
   env:
     - name: NEXT_PUBLIC_API_URL
-      value: "http://todo-backend-service:8000"
+      value: "http://todo-app-todo-app-backend:8000"
 
 # Health check configuration
 healthCheck:
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 3
+  initialDelaySeconds: 45
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 10
 
 # Secrets configuration
 secrets:
@@ -74,7 +74,8 @@ configMaps: {}
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-02-03T22:42:40.554040",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Complete Phase 1",
+      "description": "Implement core logic classes",
+      "category": "WORK",
+      "completed": true,
+      "priority": "HIGH",
+      "created_at": "2026-02-03T22:42:40.552560"
+    },
+    {
+      "id": 2,
+      "title": "Write tests",
+      "description": "Create unit tests for Task and TaskManager",
+      "category": "WORK",
+      "completed": false,
+      "priority": "MEDIUM",
+      "created_at": "2026-02-03T22:42:40.552592"
+    },
+    {
+      "id": 3,
+      "title": "Buy groceries",
+      "description": "Milk, eggs, bread",
+      "category": "PERSONAL",
+      "completed": false,
+      "priority": "LOW",
+      "created_at": "2026-02-03T22:42:40.552619"
+    }
+  ]
+}
