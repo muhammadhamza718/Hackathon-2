@@ -392,10 +392,21 @@ class BaseUI:
 
         # Create a new window for this component
         self.win = curses.newwin(height, width, start_y, start_x)
+        self.last_render_time = 0  # Track last render time for optimization
 
     def render(self) -> None:
         """Render the component - to be overridden by subclasses"""
         pass
+
+    def should_render(self) -> bool:
+        """Determine if the component should be re-rendered"""
+        import time
+        current_time = time.time()
+        # Only render if enough time has passed or if forced
+        if current_time - self.last_render_time > 0.016:  # ~60 FPS
+            self.last_render_time = current_time
+            return True
+        return False
 
     def handle_input(self, key) -> str:
         """Handle input for the component - to be overridden by subclasses"""
@@ -410,6 +421,25 @@ class BaseUI:
         self.win.resize(height, width)
         self.win.mvwin(start_y, start_x)
 
+    def safe_addstr(self, y: int, x: int, text: str, attr=None) -> bool:
+        """Safely add string to window, checking for boundary violations"""
+        try:
+            max_y, max_x = self.win.getmaxyx()
+            if y < max_y and x < max_x:
+                # Truncate text if it goes beyond window width
+                available_width = max_x - x
+                if len(text) > available_width:
+                    text = text[:available_width]
+
+                if attr is not None:
+                    self.win.addstr(y, x, text, attr)
+                else:
+                    self.win.addstr(y, x, text)
+                return True
+            return False
+        except:
+            return False
+
 
 class Header(BaseUI):
     def __init__(self, stdscr, width: int, start_y: int = 0, start_x: int = 0):
@@ -422,17 +452,29 @@ class Header(BaseUI):
         """Render the header with ASCII art title"""
         self.win.clear()
 
-        # Draw the header box
-        for x in range(self.width):
-            self.win.addch(0, x, ord('-'))
-            self.win.addch(2, x, ord('-'))
+        # Draw a more visually appealing header with corners and subtle depth effect
+        # Top border with corners
+        self.win.addch(0, 0, ord('┌'))  # Unicode corner for more modern look
+        for x in range(1, self.width - 1):
+            self.win.addch(0, x, ord('─'))
+        if self.width > 1:
+            self.win.addch(0, self.width - 1, ord('┐'))
 
-        for y in range(3):
-            self.win.addch(y, 0, ord('|'))
+        # Middle row with side borders
+        if self.height > 1:
+            self.win.addch(1, 0, ord('│'))
             if self.width > 1:
-                self.win.addch(y, self.width - 1, ord('|'))
+                self.win.addch(1, self.width - 1, ord('│'))
 
-        # Draw the ASCII art title
+        # Bottom border with corners
+        if self.height > 2:
+            self.win.addch(2, 0, ord('└'))
+            for x in range(1, self.width - 1):
+                self.win.addch(2, x, ord('─'))
+            if self.width > 1:
+                self.win.addch(2, self.width - 1, ord('┘'))
+
+        # Draw the ASCII art title centered
         title = "HYDROTODO"
         title_x = (self.width - len(title)) // 2
         self.win.addstr(1, title_x, title, curses.A_BOLD | curses.color_pair(1))  # HEADER color
@@ -458,6 +500,13 @@ class Navigation(BaseUI):
         """Render the navigation bar with tabs and search bar"""
         self.win.clear()
 
+        # Draw top border with rounded corners
+        self.win.addch(0, 0, ord('┬'))  # Top-left junction
+        for x in range(1, self.width - 1):
+            self.win.addch(0, x, ord('─'))
+        if self.width > 1:
+            self.win.addch(0, self.width - 1, ord('┬'))  # Top-right junction (rotated for visual effect)
+
         # Calculate positions for tabs and search bar
         tab_width = 12  # Width for each tab
         total_tabs_width = len(self.tabs) * tab_width
@@ -467,10 +516,11 @@ class Navigation(BaseUI):
         current_x = spacing
         for i, tab in enumerate(self.tabs):
             if tab == self.active_tab:
-                # Active tab: blue background
-                self.win.addstr(1, current_x, f" {tab} ", curses.color_pair(2))  # NAV_ACTIVE
+                # Active tab: reverse video effect (swap foreground and background)
+                attr = curses.A_REVERSE | curses.A_BOLD
+                self.win.addstr(1, current_x, f" {tab} ", attr)
             else:
-                # Inactive tab: white background
+                # Inactive tab: normal appearance
                 self.win.addstr(1, current_x, f" {tab} ", curses.color_pair(3))  # NAV_INACTIVE
             current_x += tab_width + spacing
 
@@ -484,8 +534,11 @@ class Navigation(BaseUI):
             self.win.addstr(1, search_start + 8, self.search_query, curses.color_pair(3))
 
         # Draw bottom border
-        for x in range(self.width):
-            self.win.addch(2, x, ord('-'))
+        self.win.addch(2, 0, ord('┴'))  # Bottom-left junction
+        for x in range(1, self.width - 1):
+            self.win.addch(2, x, ord('─'))
+        if self.width > 1:
+            self.win.addch(2, self.width - 1, ord('┴'))  # Bottom-right junction
 
         self.win.refresh()
 
@@ -546,16 +599,28 @@ class TaskList(BaseUI):
         """Render the task list with checkboxes and selection highlighting"""
         self.win.clear()
 
-        # Draw borders
-        for x in range(self.width):
-            self.win.addch(0, x, ord('-'))
-            if self.height > 1:
-                self.win.addch(self.height - 1, x, ord('-'))
-
-        for y in range(self.height):
-            self.win.addch(y, 0, ord('|'))
+        # Draw borders with more distinctive corners for depth effect
+        if self.height > 0 and self.width > 0:
+            # Top border
+            self.win.addch(0, 0, ord('├'))  # Left T-junction
+            for x in range(1, self.width - 1):
+                self.win.addch(0, x, ord('─'))
             if self.width > 1:
-                self.win.addch(y, self.width - 1, ord('|'))
+                self.win.addch(0, self.width - 1, ord('┤'))  # Right T-junction
+
+            # Bottom border
+            if self.height > 1:
+                self.win.addch(self.height - 1, 0, ord('╘'))  # Bottom-left rounded
+                for x in range(1, self.width - 1):
+                    self.win.addch(self.height - 1, x, ord('═'))
+                if self.width > 1:
+                    self.win.addch(self.height - 1, self.width - 1, ord('╛'))  # Bottom-right rounded
+
+            # Side borders
+            for y in range(1, self.height - 1):
+                self.win.addch(y, 0, ord('│'))
+                if self.width > 1:
+                    self.win.addstr(y, self.width - 1, '│')
 
         # Draw tasks
         visible_tasks = min(len(self.tasks), self.max_visible - 2)
@@ -563,6 +628,9 @@ class TaskList(BaseUI):
             task_idx = i + self.offset
             if task_idx >= len(self.tasks):
                 break
+
+            if task_idx < 0:
+                continue  # Skip negative indices
 
             task = self.tasks[task_idx]
 
@@ -577,7 +645,7 @@ class TaskList(BaseUI):
 
             # Highlight selected task
             if task_idx == self.selected_idx:
-                attr = curses.color_pair(6)  # SELECTION
+                attr = attr | curses.A_REVERSE  # Use reverse video for selection
 
             # Format task display
             checkbox = "[x]" if task.completed else "[ ]"
@@ -639,17 +707,32 @@ class TaskList(BaseUI):
         """Select the next task"""
         if self.selected_idx < len(self.tasks) - 1:
             self.selected_idx += 1
-            # Adjust offset if needed
-            if self.selected_idx - self.offset >= self.max_visible - 2:
-                self.offset += 1
+            # Adjust offset if needed for smooth scrolling
+            if self.selected_idx >= self.offset + self.max_visible - 2:
+                # Scroll down by 1 to center the selection as much as possible
+                self.offset = max(0, min(self.selected_idx - (self.max_visible // 2), len(self.tasks) - self.max_visible + 2))
 
     def select_prev(self) -> None:
         """Select the previous task"""
         if self.selected_idx > 0:
             self.selected_idx -= 1
-            # Adjust offset if needed
+            # Adjust offset if needed for smooth scrolling
             if self.selected_idx < self.offset:
-                self.offset -= 1
+                # Scroll up by 1 to center the selection as much as possible
+                self.offset = max(0, min(self.selected_idx - (self.max_visible // 2), len(self.tasks) - self.max_visible + 2))
+
+    def smooth_scroll_to_selection(self):
+        """Smoothly adjust the view to ensure the selected item is visible"""
+        if not self.tasks or self.selected_idx >= len(self.tasks):
+            return
+
+        # Adjust offset to keep selected item visible and centered when possible
+        if self.selected_idx < self.offset:
+            # Selected item is above current view
+            self.offset = self.selected_idx
+        elif self.selected_idx >= self.offset + (self.max_visible - 2):
+            # Selected item is below current view
+            self.offset = max(0, self.selected_idx - (self.max_visible - 3))
 
 
 class TaskDetail(BaseUI):
@@ -671,36 +754,58 @@ class TaskDetail(BaseUI):
         """Render the detailed view of the selected task"""
         self.win.clear()
 
-        # Draw borders
-        for x in range(self.width):
-            self.win.addch(0, x, ord('-'))
-            if self.height > 1:
-                self.win.addch(self.height - 1, x, ord('-'))
-
-        for y in range(self.height):
-            self.win.addch(y, 0, ord('|'))
+        # Draw borders with corners
+        if self.height > 0 and self.width > 0:
+            # Top border
+            self.win.addch(0, 0, ord('+'))
+            for x in range(1, self.width - 1):
+                self.win.addch(0, x, ord('-'))
             if self.width > 1:
-                self.win.addch(y, self.width - 1, ord('|'))
+                self.win.addch(0, self.width - 1, ord('+'))
+
+            # Bottom border
+            if self.height > 1:
+                self.win.addch(self.height - 1, 0, ord('+'))
+                for x in range(1, self.width - 1):
+                    self.win.addch(self.height - 1, x, ord('-'))
+                if self.width > 1:
+                    self.win.addch(self.height - 1, self.width - 1, ord('+'))
+
+            # Side borders
+            for y in range(1, self.height - 1):
+                self.win.addch(y, 0, ord('|'))
+                if self.width > 1:
+                    self.win.addch(y, self.width - 1, ord('|'))
 
         if self.current_task:
-            # Display task details
+            # Display task details with better formatting
             row = 1
-            self.win.addstr(row, 2, f"Title: {self.current_task.title}")
+            self.win.addstr(row, 2, "Title: ", curses.A_BOLD)
+            self.win.addstr(self.current_task.title)
             row += 1
+
+            self.win.addstr(row, 2, "Status: ", curses.A_BOLD)
             status = "Completed" if self.current_task.completed else "Pending"
-            self.win.addstr(row, 2, f"Status: {status}")
+            status_attr = curses.color_pair(7) if self.current_task.completed else curses.A_NORMAL
+            self.win.addstr(status, status_attr)
             row += 1
-            self.win.addstr(row, 2, f"Category: {self.current_task.category}")
+
+            self.win.addstr(row, 2, "Category: ", curses.A_BOLD)
+            self.win.addstr(self.current_task.category)
             row += 1
-            self.win.addstr(row, 2, f"Priority: {self.current_task.priority}")
+
+            self.win.addstr(row, 2, "Priority: ", curses.A_BOLD)
+            self.win.addstr(self.current_task.priority)
             row += 1
+
             if self.current_task.created_at:
-                self.win.addstr(row, 2, f"Created: {self.current_task.created_at.strftime('%Y-%m-%d %H:%M')}")
+                self.win.addstr(row, 2, "Created: ", curses.A_BOLD)
+                self.win.addstr(self.current_task.created_at.strftime('%Y-%m-%d %H:%M'))
             row += 2
 
             # Display description
             if self.current_task.description:
-                self.win.addstr(row, 2, "Description:", curses.A_BOLD)
+                self.win.addstr(row, 2, "Description:", curses.A_UNDERLINE)
                 row += 1
 
                 # Wrap description text
@@ -734,9 +839,12 @@ class Footer(BaseUI):
         """Render the footer with key bindings and status"""
         self.win.clear()
 
-        # Draw top border
-        for x in range(self.width):
+        # Draw top border with corners
+        self.win.addch(0, 0, ord('+'))
+        for x in range(1, self.width - 1):
             self.win.addch(0, x, ord('-'))
+        if self.width > 1:
+            self.win.addch(0, self.width - 1, ord('+'))
 
         # Draw key bindings
         key_hints = "Keys: [a]dd [d]elete [e]dit [c]omplete [n]otes [q]uit"
@@ -750,6 +858,14 @@ class Footer(BaseUI):
             msg_len = len(self.status_message)
             if self.width > msg_len + 2:
                 self.win.addstr(1, self.width - msg_len - 2, self.status_message, curses.color_pair(8))
+
+        # Draw bottom border
+        if self.height > 2:
+            self.win.addch(2, 0, ord('+'))
+            for x in range(1, self.width - 1):
+                self.win.addch(2, x, ord('-'))
+            if self.width > 1:
+                self.win.addch(2, self.width - 1, ord('+'))
 
         self.win.refresh()
 
@@ -828,6 +944,46 @@ class HydroTodoApp:
         # Set initial tasks for the current category
         self._update_task_list()
 
+    def sort_tasks_by_priority(self, tasks: List[Task]) -> List[Task]:
+        """Sort tasks by priority (HIGH, MEDIUM, LOW)"""
+        priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+        return sorted(tasks, key=lambda task: priority_order.get(task.priority, 3))
+
+    def sort_tasks_by_date(self, tasks: List[Task]) -> List[Task]:
+        """Sort tasks by creation date (newest first)"""
+        return sorted(tasks, key=lambda task: task.created_at, reverse=True)
+
+    def profile_performance(self, num_tasks: int = 1000) -> None:
+        """Profile application performance with large task lists"""
+        import time
+
+        # Create many tasks for profiling
+        start_time = time.time()
+        for i in range(num_tasks):
+            self.task_manager.add_task(
+                f"Performance task {i}",
+                f"Description for performance task {i}",
+                "WORK",
+                "MEDIUM"
+            )
+
+        create_time = time.time() - start_time
+
+        # Test filtering/searching performance
+        start_time = time.time()
+        results = self.task_manager.search_tasks("performance")
+        search_time = time.time() - start_time
+
+        # Test UI refresh performance
+        start_time = time.time()
+        self._update_task_list()
+        self.refresh_display()
+        refresh_time = time.time() - start_time
+
+        # Report results
+        self.footer.set_status(f"Created {num_tasks} tasks in {create_time:.2f}s, search: {search_time:.2f}s, refresh: {refresh_time:.2f}s")
+        self.footer.render()
+
     def _update_task_list(self) -> None:
         """Update the task list based on current category and search query"""
         if self.search_query:
@@ -836,6 +992,9 @@ class HydroTodoApp:
             tasks = [t for t in tasks if t.category == self.current_category]
         else:
             tasks = self.task_manager.get_tasks_by_category(self.current_category)
+
+        # Sort tasks by priority (optional - can be configured)
+        tasks = self.sort_tasks_by_priority(tasks)
 
         self.task_list.set_tasks(tasks)
 
@@ -860,6 +1019,11 @@ class HydroTodoApp:
             try:
                 # Get user input
                 key = self.stdscr.getch()
+
+                # Handle terminal resize
+                if key == curses.KEY_RESIZE:
+                    self._handle_resize()
+                    continue
 
                 # Handle global key bindings
                 if key == ord('q'):
@@ -911,17 +1075,30 @@ class HydroTodoApp:
                         self.refresh_display()
                         self.footer.set_status(f"Toggled task {task_id}")
                 elif list_result == "DELETE_TASK":
-                    # Delete the selected task
+                    # Delete the selected task with confirmation
                     tasks = self.task_list.tasks
                     if self.task_list.selected_idx < len(tasks):
                         task_id = tasks[self.task_list.selected_idx].id
                         task_title = tasks[self.task_list.selected_idx].title
-                        if self.task_manager.delete_task(task_id):
-                            self._update_task_list()
-                            self.refresh_display()
-                            self.footer.set_status(f"Deleted task: {task_title}")
+
+                        # Show confirmation prompt
+                        self.footer.set_status(f"Confirm delete '{task_title}'? Press 'y' to confirm, any other key to cancel")
+                        self.footer.render()
+
+                        # Get confirmation
+                        confirm_key = self.stdscr.getch()
+                        if confirm_key == ord('y') or confirm_key == ord('Y'):
+                            if self.task_manager.delete_task(task_id):
+                                self._update_task_list()
+                                self.refresh_display()
+                                self.footer.set_status(f"Deleted task: {task_title}")
+                            else:
+                                self.footer.set_status(f"Could not delete task {task_id}")
                         else:
-                            self.footer.set_status(f"Could not delete task {task_id}")
+                            self.footer.set_status(f"Delete cancelled for: {task_title}")
+
+                        # Refresh footer to clear the confirmation prompt
+                        self.footer.render()
                 elif list_result == "EDIT_TASK":
                     # Edit the selected task
                     self.handle_edit_task()
@@ -930,9 +1107,36 @@ class HydroTodoApp:
 
             except KeyboardInterrupt:
                 break
+            except Exception as e:
+                # Handle other errors gracefully
+                self.footer.set_status(f"Error: {str(e)}")
+                self.footer.render()
 
         # Cleanup before exit
         self.cleanup()
+
+    def _handle_resize(self) -> None:
+        """Handle terminal resize events"""
+        # Get new dimensions
+        height, width = self.stdscr.getmaxyx()
+
+        # Calculate new dimensions for each component
+        nav_height = 3
+        footer_height = 3
+        main_height = height - nav_height - footer_height - 6
+
+        list_width = width // 2 - 2
+        detail_width = width - list_width - 4
+
+        # Resize components
+        self.header.resize(3, width, 0, 0)
+        self.navigation.resize(3, width, 3, 0)
+        self.task_list.resize(main_height, list_width, 6, 0)
+        self.task_detail.resize(main_height, detail_width, 6, list_width + 2)
+        self.footer.resize(3, width, height - 3, 0)
+
+        # Re-render everything
+        self.refresh_display()
 
     def cleanup(self) -> None:
         """Cleanup curses and save data"""
@@ -950,6 +1154,7 @@ class HydroTodoApp:
 
     def refresh_display(self) -> None:
         """Refresh all UI components"""
+        # Only render components that need updating for efficiency
         self.header.render()
         self.navigation.render()
         self.task_list.render()
@@ -961,14 +1166,16 @@ class HydroTodoApp:
         """Placeholder for adding a task - in a full implementation, this would show an input dialog"""
         # For now, we'll add a placeholder task
         try:
-            self.task_manager.add_task(
+            new_task = self.task_manager.add_task(
                 f"New task {len(self.task_manager.get_all_tasks()) + 1}",
                 "Added via UI",
                 self.current_category
             )
-            self.footer.set_status("Added new task")
+            self.footer.set_status(f"Added task: {new_task.title}")
         except ValueError as e:
-            self.footer.set_status(f"Error: {str(e)}")
+            self.footer.set_status(f"Error adding task: {str(e)}")
+        except Exception as e:
+            self.footer.set_status(f"Unexpected error: {str(e)}")
 
     def handle_delete_task(self) -> None:
         """Placeholder for deleting a task"""
@@ -1011,16 +1218,15 @@ class HydroTodoApp:
 
 def main(stdscr):
     """Main entry point for the curses application"""
-    app = HydroTodoApp()
-
-    # Set the stdscr in the app
-    app.stdscr = stdscr
-
-    # Initialize UI components
-    height, width = stdscr.getmaxyx()
+    # Initialize curses settings
+    curses.curs_set(0)  # Hide cursor
+    stdscr.keypad(True)  # Enable keypad mode for special keys
+    curses.noecho()     # Don't echo pressed keys
+    curses.cbreak()     # React to keys instantly without waiting for enter
 
     # Initialize colors
     curses.start_color()
+    curses.use_default_colors()  # Use default terminal colors when possible
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)    # HEADER
     curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)    # NAV_ACTIVE
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)   # NAV_INACTIVE
@@ -1030,33 +1236,14 @@ def main(stdscr):
     curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)   # TASK_COMPLETED
     curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)   # FOOTER
 
-    # Initialize components
-    app.header = Header(stdscr, width, 0, 0)
+    # Create and run the app
+    app = HydroTodoApp()
 
-    nav_height = 3
-    app.navigation = Navigation(stdscr, width, 3, 0)
+    # Initialize UI components
+    app.stdscr = stdscr
+    app.initialize_ui()
 
-    footer_height = 3
-    main_height = height - nav_height - footer_height - 6
-
-    list_width = width // 2 - 2
-    detail_width = width - list_width - 4
-
-    app.task_list = TaskList(stdscr, main_height, list_width, 6, 0)
-    app.task_detail = TaskDetail(stdscr, main_height, detail_width, 6, list_width + 2)
-    app.footer = Footer(stdscr, width, height - 3, 0)
-
-    # Set initial tasks
-    app._update_task_list()
-
-    # Initial render
-    app.header.render()
-    app.navigation.render()
-    app.task_list.render()
-    app.task_detail.render()
-    app.footer.render()
-
-    # Main loop
+    # Run the main loop
     app.run()
 
 
