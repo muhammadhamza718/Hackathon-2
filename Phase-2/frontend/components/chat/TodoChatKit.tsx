@@ -13,14 +13,6 @@ import { ErrorBoundary } from "../ui/error-boundary";
  * Uses ChatKit Web Component directly to avoid React wrapper issues
  */
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "openai-chatkit": any;
-    }
-  }
-}
-
 function TodoChatKitComponent() {
   const { toggleSidebar } = useSidebar();
   const { resolvedTheme, theme: activeTheme } = useTheme();
@@ -75,7 +67,7 @@ function TodoChatKitComponent() {
 
     console.log(
       "🛠️ ChatKit options (Manual Set):",
-      JSON.stringify(options, null, 2)
+      JSON.stringify(options, null, 2),
     );
 
     customElements
@@ -93,7 +85,7 @@ function TodoChatKitComponent() {
           } else {
             console.warn(
               "⚠️ ChatKit element not ready or setOptions missing",
-              el
+              el,
             );
           }
         }, 100);
