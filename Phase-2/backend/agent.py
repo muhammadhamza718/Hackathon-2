@@ -1,12 +1,12 @@
+import logging
+import os
+from openai import AsyncOpenAI
+from agents import Agent, set_tracing_disabled, OpenAIChatCompletionsModel
 from dotenv import load_dotenv
 
 # Load environment variables BEFORE any local imports that create DB engines
 load_dotenv()
 
-from agents import Agent, set_tracing_disabled, OpenAIChatCompletionsModel
-from openai import AsyncOpenAI
-import os
-import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -15,22 +15,24 @@ logger = logging.getLogger(__name__)
 # Disable OpenAI tracing
 set_tracing_disabled(True)
 
+
 def init_llm_client() -> AsyncOpenAI:
     """Initialize AsyncOpenAI client for Gemini"""
     api_key = os.getenv("GEMINI_API_KEY")
     base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    
+
     if not api_key or api_key.startswith("YOUR_"):
         logger.error("❌ No valid GEMINI_API_KEY found!")
         raise ValueError("GEMINI_API_KEY environment variable is required")
-    
+
     logger.info(f"✅ Using GEMINI_API_KEY (starts with: {api_key[:4]}...)")
     logger.info(f"Initializing AsyncOpenAI client with base_url: {base_url}")
-    
+
     return AsyncOpenAI(api_key=api_key, base_url=base_url)
 
+
 # ===== LLM SETUP =====
-GEMINI_MODEL_NAME = "gemini-1.5-flash-001"
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 _client = init_llm_client()
 GEMINI_MODEL = OpenAIChatCompletionsModel(
     model=GEMINI_MODEL_NAME,
@@ -38,6 +40,7 @@ GEMINI_MODEL = OpenAIChatCompletionsModel(
 )
 
 # ===== AGENT CREATION =====
+
 
 def create_todo_agent(tools: list = None) -> Agent:
     """
@@ -63,13 +66,13 @@ IMPORTANT GUIDELINES:
 4. Be conversational, friendly, and use emojis (✅, 📋, 🗑️).
 5. Always confirm when an action has been successfully completed.
 """
-    
+
     agent = Agent(
         name="Todo Assistant",
         instructions=instructions,
         model=GEMINI_MODEL,
         tools=tools or []
     )
-    
+
     logger.info(f"✅ Todo agent created with {len(tools or [])} tools")
     return agent
