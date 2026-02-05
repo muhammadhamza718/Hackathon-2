@@ -3,7 +3,7 @@
 **Branch**: `001-premium-tui` | **Date**: 2026-01-06 | **Spec**: F:/Courses/Hamza/Hackathon-2-Phase-1/specs/001-premium-tui/spec.md
 **Input**: Feature specification from `/specs/001-premium-tui/spec.md`
 
-**Note**: This template is filled in by the `/sp.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/sp.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow
 
 ## Summary
 
