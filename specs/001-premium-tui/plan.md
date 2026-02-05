@@ -5,7 +5,7 @@
 
 **Note**: This template is filled in by the `/sp.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
-## Summar
+## Summary
 
 Implement a visually premium Terminal User Interface (TUI) for the todo application using Textual and Rich frameworks, prioritizing visual aesthetics (gradient ASCII art logo, custom DataTable styling, themed components) while maintaining core todo functionality (Add, List, Update, Delete, Toggle Complete) with strict Phase-1 scope (no Priority/Tags).
 
