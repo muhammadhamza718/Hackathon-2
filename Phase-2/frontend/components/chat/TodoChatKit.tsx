@@ -112,6 +112,7 @@ function TodoChatKitComponent() {
   return (
     <div className="w-full h-full overflow-hidden flex flex-col">
       <ErrorBoundary>
+        {/* @ts-ignore - Custom element not typed */}
         <openai-chatkit ref={chatRef} class="w-full h-full" />
       </ErrorBoundary>
     </div>
