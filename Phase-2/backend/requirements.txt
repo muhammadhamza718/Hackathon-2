@@ -6,7 +6,7 @@ passlib[bcrypt]
 PyJWT
 asyncpg
 openai-agents
-agents
+# agents
 openai-chatkit
 openai 
 httpx

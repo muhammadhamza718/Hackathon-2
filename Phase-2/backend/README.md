@@ -1,3 +1,12 @@
+---
+title: Backend API
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # Todo App Backend (Phase II)
 
 This is the FastAPI-based backend for the Phase II Todo Application. It provides a secure REST API with JWT-based authentication and Role-Based Access Control (RBAC).
