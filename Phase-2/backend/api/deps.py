@@ -98,11 +98,19 @@ async def get_current_user(
 
     user = user[0]  # Extract user from tuple
 
-    # For JWTs, we might sync the role. For Opaque, the DB role is truth.
-    # Note: If JWT had a claimed role, we might want to respect it or sync it.
-    # But trusting the DB is safer.
-    
+    # --- AUTO-PROMOTION Logic ---
+    # Automatically grant 'admin' role if the email matches ADMIN_EMAIL from env
+    import os
+    admin_email_env = os.getenv("ADMIN_EMAIL")
+    if admin_email_env and user.email == admin_email_env and user.role != "admin":
+        print(f"AUTO-PROMOTION: Setting Admin role for {user.email}")
+        user.role = "admin"
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
     return user
+
 
 
 async def get_current_admin(
