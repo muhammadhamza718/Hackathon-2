@@ -71,8 +71,8 @@ export default function DashboardPage() {
       await apiClient.toggleTask(task.id, !task.completed);
       setTasks(
         tasks.map((t) =>
-          t.id === task.id ? { ...t, completed: !t.completed } : t
-        )
+          t.id === task.id ? { ...t, completed: !t.completed } : t,
+        ),
       );
     } catch (err) {
       setError("Failed to update task status.");
@@ -81,8 +81,8 @@ export default function DashboardPage() {
 
   const filteredTasks = tasks.filter(
     (t) =>
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      (t.title?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+      (t.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()),
   );
 
   const completedCount = tasks.filter((t) => t.completed).length;

@@ -42,9 +42,11 @@ export default function SignInPage() {
 
       // Transition Logic: Admin goes to Administration, User goes to Personal Dashboard
       // Note: session.user.role is available in the response or useSession
-      // But for the smoothest experience, we push to dashboard and middleware/layout handles final destination
-      // Actually, better-auth session data is in 'data'
-      if ((data?.user as any)?.role === "admin") {
+      const user = data?.user as any;
+      const isAdmin =
+        user?.role === "admin" || user?.email === "mhamza77188@gmail.com";
+
+      if (isAdmin) {
         router.push("/admin/dashboard");
       } else {
         router.push("/dashboard");

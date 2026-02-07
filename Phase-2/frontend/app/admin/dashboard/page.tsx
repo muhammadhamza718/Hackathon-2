@@ -72,12 +72,12 @@ const AdminDashboardPage = () => {
           } catch (err) {
             tasksMap[user.id] = [];
           }
-        })
+        }),
       );
       setUserTasks(tasksMap);
     } catch (err) {
       setError(
-        "System Access Denied: Secure communication with the management service failed."
+        "System Access Denied: Secure communication with the management service failed.",
       );
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ const AdminDashboardPage = () => {
       const newRole = currentRole === "admin" ? "user" : "admin";
       await adminUpdateUserRole(userId, newRole);
       setUsers(
-        users.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+        users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
       );
     } catch (err) {
       setError("Role transition failed.");
@@ -124,8 +124,8 @@ const AdminDashboardPage = () => {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (user.name?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+      (user.email?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()),
   );
 
   const totalTasks = Object.values(userTasks).flat().length;
