@@ -1,4 +1,4 @@
-# Claude Code Rules
+# Claude Code Rule
 
 This file is generated during init for the selected agent
 
