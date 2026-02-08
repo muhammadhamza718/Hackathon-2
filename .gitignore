@@ -1,0 +1,19 @@
+# Deployment temporary folders
+hf_deploy_tmp/
+hf_deploy_palwasha/
+
+# Environment files
+.env
+.env.*
+
+# Python
+__pycache__/
+.venv/
+venv/
+*.py[oc]
+
+# Frontend
+node_modules/
+.next/
+dist/
+build/

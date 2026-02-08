@@ -89,27 +89,44 @@ async def get_current_user(
     if not user_id:
         raise credentials_exception
 
+    # --- LOGGING: AUTH ATTEMPT ---
+    auth_header = request.headers.get("Authorization")
+    print(f"DEBUG: Auth Check - Header present: {bool(auth_header)}")
+
     # 3. Get user from database
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.first()
 
     if user:
         user = user[0]
-        print(f"DEBUG: Found user in DB: {user.email} (Role: {user.role})")
+        print(
+            f"DEBUG: Found user in DB: {user.email} (ID: {user.id}, Role: {user.role})")
     else:
-        print(f"DEBUG: User {user_id} not found in DB")
+        print(f"DEBUG: User {user_id} not found in database. Raising 401.")
         raise credentials_exception
 
     # --- AUTO-PROMOTION Logic ---
     # Automatically grant 'admin' role if the email matches ADMIN_EMAIL from env
     import os
     admin_email_env = os.getenv("ADMIN_EMAIL")
-    if admin_email_env and user.email and user.email.lower() == admin_email_env.lower() and user.role != "admin":
-        print(f"AUTO-PROMOTION: Setting Admin role for {user.email}")
-        user.role = "admin"
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+
+    print(
+        f"DEBUG: Auto-Promotion Check - Admin email in env: {'***MASKED***' if admin_email_env else 'NONE'}")
+
+    if admin_email_env and user.email:
+        is_match = user.email.lower() == admin_email_env.lower()
+        print(
+            f"DEBUG: Email matches admin env? {is_match} (DB: {user.email.lower()}, Env: {admin_email_env.lower() if admin_email_env else 'N/A'})")
+
+        if is_match and user.role != "admin":
+            print(f"AUTO-PROMOTION: Setting Admin role for {user.email}")
+            user.role = "admin"
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            print(f"DEBUG: Role updated to: {user.role}")
+        elif is_match:
+            print(f"DEBUG: User is already admin.")
 
     return user
 
