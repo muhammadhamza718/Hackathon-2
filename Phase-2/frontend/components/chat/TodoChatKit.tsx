@@ -51,7 +51,7 @@ function TodoChatKitComponent() {
     const options = {
       api: {
         url: `${backendUrl.replace(/\/$/, "")}/chatkit?token=${token}`,
-        domainKey: "domain_pk_694e660b27cc8194af36166984c678920dffab26d4b3cd54",
+        domainKey: "domain_pk_6988b2bd15b8819390fc424dfce2a2560ec1eea7e83904ba",
       } as any,
       header: {
         title: {

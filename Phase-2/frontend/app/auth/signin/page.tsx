@@ -41,10 +41,11 @@ export default function SignInPage() {
       }
 
       // Transition Logic: Admin goes to Administration, User goes to Personal Dashboard
-      // Note: session.user.role is available in the response or useSession
       const user = data?.user as any;
-      const isAdmin =
-        user?.role === "admin" || user?.email === "mhamza77188@gmail.com";
+      const isAdmin = user?.role === "admin";
+
+      console.log("DEBUG: Login Response User:", user);
+      console.log("DEBUG: Redirecting as Admin:", isAdmin);
 
       if (isAdmin) {
         router.push("/admin/dashboard");

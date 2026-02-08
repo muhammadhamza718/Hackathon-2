@@ -31,14 +31,14 @@ async def get_current_user(
     token = None
     if credentials:
         token = credentials.credentials
-    
+
     # Fallback: Try query parameter 'token' if header is missing
     # This is required for ChatKit Web Component which has issues sending headers with custom URL
     if not token and request.query_params.get("token"):
         token = request.query_params.get("token")
 
     if not token:
-         raise credentials_exception
+        raise credentials_exception
 
     user_id: Optional[str] = None
     user_role: str = "user"  # Default role if not found in token
@@ -60,12 +60,12 @@ async def get_current_user(
         print(f"DEBUG: Checking DB for Opaque Token: {token[:15]}...")
         from models.session import Session as DbSession
         from datetime import datetime
-        
+
         # Query session table
         query = select(DbSession).where(DbSession.token == token)
         result = await session.execute(query)
         db_session = result.scalar_one_or_none()
-        
+
         if db_session:
             # Check expiration
             # Ensure proper timezone handling
@@ -74,7 +74,7 @@ async def get_current_user(
             if expires_at.tzinfo is None:
                 # If naive, assume UTC
                 expires_at = expires_at.replace(tzinfo=timezone.utc)
-            
+
             # Use now(timezone.utc) for correct aware datetime
             now_utc = datetime.now(timezone.utc)
 
@@ -93,16 +93,18 @@ async def get_current_user(
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.first()
 
-    if user is None:
+    if user:
+        user = user[0]
+        print(f"DEBUG: Found user in DB: {user.email} (Role: {user.role})")
+    else:
+        print(f"DEBUG: User {user_id} not found in DB")
         raise credentials_exception
-
-    user = user[0]  # Extract user from tuple
 
     # --- AUTO-PROMOTION Logic ---
     # Automatically grant 'admin' role if the email matches ADMIN_EMAIL from env
     import os
     admin_email_env = os.getenv("ADMIN_EMAIL")
-    if admin_email_env and user.email == admin_email_env and user.role != "admin":
+    if admin_email_env and user.email and user.email.lower() == admin_email_env.lower() and user.role != "admin":
         print(f"AUTO-PROMOTION: Setting Admin role for {user.email}")
         user.role = "admin"
         session.add(user)
@@ -110,7 +112,6 @@ async def get_current_user(
         await session.refresh(user)
 
     return user
-
 
 
 async def get_current_admin(
